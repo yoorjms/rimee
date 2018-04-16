@@ -1,0 +1,90 @@
+import java.awt.Dimension;
+import java.awt.EventQueue;
+import java.awt.Graphics;
+import java.awt.Graphics2D;
+import java.awt.image.BufferedImage;
+import java.io.File;
+import java.io.IOException;
+
+import javax.imageio.ImageIO;
+import javax.swing.JFrame;
+import javax.swing.JPanel;
+
+class Surface extends JPanel {
+
+    private BufferedImage source_image;
+    private BufferedImage result_image;
+    private final int SPACE = 10;
+
+    public Surface() {
+
+        loadImage();
+        //result_image = Transformations.scaleImage(source_image, 2.0f);
+        result_image = Transformations.invert(source_image);
+        setSurfaceSize();
+    }
+
+    private void loadImage() {
+
+    	File imageFile = new File("gray1.jpg");
+    	try {
+			source_image = ImageIO.read(imageFile);
+		} catch (IOException e) {
+			e.printStackTrace();
+		}
+    }
+    
+    private void setSurfaceSize() {
+                
+        int w1 = result_image.getWidth();
+        int w2 = source_image.getWidth();
+        int h = result_image.getHeight();
+        
+        Dimension d = new Dimension(3*SPACE+w1+w2, h+2*SPACE);
+        setPreferredSize(d);
+    }
+
+    private void doDrawing(Graphics g) {
+
+        Graphics2D g2d = (Graphics2D) g;
+
+        g2d.drawImage(source_image, SPACE, SPACE, null);
+        g2d.drawImage(result_image, null, 2*SPACE + source_image.getWidth(), SPACE);
+    }
+
+    @Override
+    public void paintComponent(Graphics g) {
+
+        super.paintComponent(g);
+        doDrawing(g);
+    }
+}
+
+public class ImageProcessing extends JFrame {
+
+    public ImageProcessing() {
+
+        initUI();
+    }
+
+    private void initUI() {
+
+        add(new Surface());
+        pack();
+
+        setTitle("영상처리 실습");
+        setLocationRelativeTo(null);
+        setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+    }
+
+    public static void main(String[] args) {
+
+        EventQueue.invokeLater(new Runnable() {
+            @Override
+            public void run() {
+            	ImageProcessing ex = new ImageProcessing();
+                ex.setVisible(true);
+            }
+        });
+    }
+}
