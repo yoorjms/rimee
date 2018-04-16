@@ -1,0 +1,175 @@
+import java.awt.Color;
+import java.awt.image.BufferedImage;
+
+public class LegionOperation {
+	public static BufferedImage blur(BufferedImage img) {
+		BufferedImage dest = new BufferedImage(img.getWidth(), img.getHeight(), 
+				BufferedImage.TYPE_INT_ARGB);		
+ 		int width = img.getWidth();
+		int height = img.getHeight();
+		int mask_size = 7;
+		int w = mask_size/2;
+//		float [] mask = {
+//				1.0f/9.0f, 1.0f/9.0f,1.0f/9.0f,
+//				1.0f/9.0f, 1.0f/9.0f,1.0f/9.0f,
+//				1.0f/9.0f, 1.0f/9.0f,1.0f/9.0f};
+		float [] mask = new float [mask_size*mask_size];
+		for (int i =0; i < mask_size*mask_size; i++) mask[i] = 1.0f/(mask_size*mask_size);
+		
+		for (int i = w ; i < width-w; i++) {
+	        for (int j = w; j < height-w; j++) {
+				int px = convolve(img, i, j, mask, mask_size);
+		        dest.setRGB(i, j, px);
+	        }
+	    }	
+		
+	    return dest;
+	}
+	
+	public static int convolve(BufferedImage img, int x, int y, float[] mask, int mask_size) {
+		int m = 0;
+		int w = mask_size / 2;
+
+		float red_sum = 0;
+		float green_sum = 0;
+		float blue_sum = 0;
+
+		for (int i = x - w; i <= x + w; i++)
+			for (int j = y - w; j <= y + w; j++) {
+				int px = img.getRGB(i, j);
+				int red = (px >> 16) & 0xFF;
+				int green = (px >> 8) & 0xFF;
+				int blue = px & 0xFF;
+
+				red_sum += red * mask[m];
+				green_sum += green * mask[m];
+				blue_sum += blue * mask[m++];
+
+			}
+		if (red_sum > 255) 			red_sum = 255;
+		if (red_sum < 0)			red_sum = 0;
+		if (green_sum > 255)			green_sum = 255;
+		if (green_sum < 0)			green_sum = 0;
+		if (blue_sum > 255)			blue_sum = 255;
+		if (blue_sum < 0)			blue_sum = 0;
+		
+		int val = (0xFF << 24) + ((int) red_sum << 16) + ((int) green_sum << 8) + (int) blue_sum;
+
+		return val;
+	}
+	
+	public static int convolve(BufferedImage img, int x, int y, int[] h_mask, int[] v_mask, int mask_size) {
+		int m = 0;
+		int w = mask_size / 2;
+
+		int rh = 0; int rv = 0;
+		int gh= 0; int gv = 0;
+		int bh= 0; int bv = 0;
+
+		for (int i = x - w; i <= x + w; i++) {
+			for (int j = y - w; j <= y + w; j++) {
+				int px = img.getRGB(i, j);
+				int red = (px >> 16) & 0xFF;
+				int green = (px >> 8) & 0xFF;
+				int blue = px & 0xFF;
+
+				rh += red * h_mask[m];
+				gh += green * h_mask[m];
+				bh += blue * h_mask[m];
+
+				rv += red * v_mask[m];
+				gv += green * v_mask[m];
+				bv += blue * v_mask[m];
+				
+				m = m + 1;
+			}
+		}
+		double r = Math.sqrt((double)(rh*rh + rv*rv));
+		double g = Math.sqrt((double)(gh*gh + gv*gv));
+		double b = Math.sqrt((double)(bh*bh + bv*bv));
+		double v = Math.sqrt(r*r + g*g + b*b);
+		int val = (int)v;
+		if (val > 255) 	val = 255; 		if (val < 0)			val = 0;
+		
+		int px = (0xFF << 24) + (val << 16) + (val << 8) + val;
+
+		return px;
+	}
+	
+	public static BufferedImage blurGauss(BufferedImage img) {
+		BufferedImage dest = new BufferedImage(img.getWidth(), img.getHeight(), 
+				BufferedImage.TYPE_INT_ARGB);		
+ 		int width = img.getWidth();
+		int height = img.getHeight();
+		int mask_size = 5;
+		int w = mask_size/2;
+		float [] mask = {
+				1.0f/273.0f,   4.0f/273.0f,    7.0f/273.0f,   4.0f/273.0f, 1.0f/273.0f, 
+				4.0f/273.0f, 16.0f/273.0f, 26.0f/273.0f, 16.0f/273.0f, 4.0f/273.0f, 
+				7.0f/273.0f, 26.0f/273.0f, 41.0f/273.0f, 26.0f/273.0f, 7.0f/273.0f, 
+				4.0f/273.0f, 16.0f/273.0f, 26.0f/273.0f, 16.0f/273.0f, 4.0f/273.0f, 
+				1.0f/273.0f,   4.0f/273.0f,    7.0f/273.0f,   4.0f/273.0f, 1.0f/273.0f};
+//		float [] mask = new float [mask_size*mask_size];
+//		for (int i =0; i < mask_size*mask_size; i++) mask[i] = 1.0f/(mask_size*mask_size);
+		
+		for (int i = w ; i < width-w; i++) {
+	        for (int j = w; j < height-w; j++) {
+				int px = convolve(img, i, j, mask, mask_size);
+		        dest.setRGB(i, j, px);
+	        }
+	    }	
+		
+	    return dest;
+	}	
+	
+	public static BufferedImage sharpen(BufferedImage img) {
+		BufferedImage dest = new BufferedImage(img.getWidth(), img.getHeight(), 
+				BufferedImage.TYPE_INT_ARGB);		
+ 		int width = img.getWidth();
+		int height = img.getHeight();
+		int mask_size = 3;
+		int w = mask_size/2;
+		float [] mask = {
+				 0.0f, -1.0f,  0.0f,
+				-1.0f,  5.0f, -1.0f,
+				 0.0f, -1.0f,  0.0f
+		};
+						
+		for (int i = w ; i < width-w; i++) {
+	        for (int j = w; j < height-w; j++) {
+				int px = convolve(img, i, j, mask, mask_size);
+		        dest.setRGB(i, j, px);
+	        }
+	    }	
+		
+	    return dest;
+	}	
+	
+	public static BufferedImage prewitt(BufferedImage img) {
+		BufferedImage dest = new BufferedImage(img.getWidth(), img.getHeight(), 
+				BufferedImage.TYPE_INT_ARGB);		
+ 		int width = img.getWidth();
+		int height = img.getHeight();
+		int mask_size = 3;
+		int w = mask_size/2;
+		int [] h_mask = {
+				 -1, -1,  -1,
+				  0,   0,   0,
+				  1,  1,   1
+		};
+		int [] v_mask = {
+				  1,  0,  -1,
+				  1,  0,  -1,
+				  1,  0,  -1
+		};		
+		
+		for (int i = w ; i < width-w; i++) {
+	        for (int j = w; j < height-w; j++) {
+				int px = convolve(img, i, j, h_mask, v_mask, mask_size);
+				dest.setRGB(i, j, px);
+	        }
+	    }	
+		
+	    return dest;
+	}
+}
